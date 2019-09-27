@@ -14,6 +14,7 @@ import {vm} from '../platform/vm-web.js';
 
 import {JsonldToManifest} from './converters/jsonldToManifest.js';
 import {DomParticle} from './dom-particle.js';
+import {FunctionalParticle} from './functional-particle.js';
 import {MultiplexerDomParticle} from './multiplexer-dom-particle.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {ParticleSpec} from './particle-spec.js';
@@ -160,7 +161,15 @@ export class Loader {
    */
   unwrapParticle(particleWrapper): typeof Particle {
     assert(this.pec);
-    return particleWrapper({Particle, DomParticle, TransformationDomParticle, MultiplexerDomParticle, Reference: ClientReference.newClientReference(this.pec), html});
+    return particleWrapper({
+      Particle,
+      DomParticle,
+      TransformationDomParticle,
+      MultiplexerDomParticle,
+      FunctionalParticle,
+      Reference: ClientReference.newClientReference(this.pec),
+      html,
+    });
   }
 
   clone(): Loader {

@@ -363,9 +363,10 @@ export class CollectionProxy extends StorageProxy implements CollectionStore {
 
   async clear(particleId): Promise<void> {
     if (this.synchronized !== SyncState.full) {
+      console.log('a');
       this.port.HandleRemoveMultiple(this, () => {}, [], particleId);
     }
-
+    console.log('b');
     let items = this.model.toList().map(item => ({id: item.id, keys: this.model.getKeys(item.id)}));
     this.port.HandleRemoveMultiple(this, () => {}, items, particleId);
 
