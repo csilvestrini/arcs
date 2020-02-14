@@ -1,4 +1,3 @@
-// ktlint-disable filename
 /*
  * Copyright 2020 Google LLC.
  *
@@ -10,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-@file:Suppress("PackageName", "TopLevelName")
+@file:Suppress("PackageName")
 
 package arcs.sdk
 

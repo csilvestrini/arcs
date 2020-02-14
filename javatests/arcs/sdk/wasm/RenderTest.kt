@@ -12,6 +12,7 @@
 package arcs.sdk.wasm
 
 import arcs.sdk.Handle
+import arcs.sdk.dev.renderOutput
 
 class RenderTest : AbstractRenderTest() {
     private var shouldTemplate: Boolean = true

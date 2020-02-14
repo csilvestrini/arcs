@@ -1,4 +1,3 @@
-// ktlint-disable filename
 /*
  * Copyright 2020 Google LLC.
  *
@@ -10,16 +9,17 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-@file:Suppress("PackageName", "TopLevelName")
+@file:Suppress("PackageName")
 
 package arcs.sdk
 
-import arcs.sdk.wasm.WasmRuntimeClient
+import arcs.sdk.dev.WasmRuntimeClient
+
 
 object Utils : UtilsInterface {
-    override fun log(msg: String) = arcs.sdk.wasm.log(msg)
+    override fun log(msg: String) = arcs.sdk.dev.log(msg)
 
-    override fun abort() = arcs.sdk.wasm.abort()
+    override fun abort() = arcs.sdk.dev.abort()
 
     override fun assert(message: String, cond: Boolean) {
         if (cond) return

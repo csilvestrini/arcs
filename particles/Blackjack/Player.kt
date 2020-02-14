@@ -1,7 +1,7 @@
 package arcs.tutorials.blackjack
 
 import arcs.sdk.Handle
-import arcs.sdk.Utils.log
+import arcs.sdk.wasm.Utils.log
 
 class Player : AbstractPlayer() {
     val name = "Player"

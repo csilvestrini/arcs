@@ -29,7 +29,7 @@ Description
 Options
   --cpp, -c      generate C++ code
   --kotlin, -k   generate Kotlin code
-  --wasm         whether to output wasm-specific code (applies to Kotlin only)
+  --platform     platform to target, one of jvm, wasm, js (applies to Kotlin only)
   --outdir, -d   output directory; defaults to '.'
   --outfile, -f  output filename; if omitted, generated from the manifest name
   --package, -p  scope generated code to the specified package or namespace
@@ -53,6 +53,10 @@ async function main() {
       await new Schema2Cpp(opts).call();
     }
     if (opts.kotlin) {
+      opts.platform = opts.platform || 'jvm';
+      if (opts.platform !in ['jvm', 'js', 'wasm']) {
+        throw new Error(`Unexpected platform ${opts.platform}.`);
+      }
       await new Schema2Kotlin(opts).call();
     }
   } catch (e) {

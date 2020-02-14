@@ -11,6 +11,8 @@
 
 package arcs.sdk.wasm
 
+import arcs.sdk.dev.WasmSingletonImpl
+
 class EntityClassApiTest : TestBase<EntityClassApiTest_Errors>(
     ::EntityClassApiTest_Errors,
     EntityClassApiTest_Errors_Spec()

@@ -9,6 +9,14 @@ package arcs.sdk
 // Current implementation doesn't support references or optional field detection
 
 import arcs.sdk.*
+import arcs.sdk.dev.NullTermByteArray
+import arcs.sdk.dev.StringDecoder
+import arcs.sdk.dev.StringEncoder
+import arcs.sdk.dev.WasmEntity
+import arcs.sdk.dev.WasmEntitySpec
+import arcs.sdk.dev.WasmParticleImpl
+import arcs.sdk.dev.WasmSingletonImpl
+import arcs.sdk.dev.toUtf8String
 import arcs.sdk.wasm.*
 
 class GoldInternal1() : WasmEntity {

@@ -11,6 +11,8 @@
 
 package arcs.sdk.wasm
 
+import arcs.sdk.dev.StringEncoder
+import arcs.sdk.dev.toUtf8String
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith

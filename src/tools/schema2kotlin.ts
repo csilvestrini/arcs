@@ -34,6 +34,19 @@ const typeMap = {
   'B': {type: 'Boolean', decodeFn: 'decodeBool()', defaultVal: 'false'},
 };
 
+const platformSpecificImports = {
+  'jvm': [
+    'import arcs.core.data.RawEntity',
+    'import arcs.core.data.util.toReferencable',
+  ],
+  'wasm': [
+    'import arcs.sdk.dev.*',
+  ],
+  'js': [
+    'import arcs.sdk.dev.*',
+  ],
+};
+
 export class Schema2Kotlin extends Schema2Base {
   // test-KOTLIN.file_Name.arcs -> TestKotlinFileName.kt
   outputName(baseName: string): string {
@@ -54,7 +67,7 @@ package ${this.scope}
 // Current implementation doesn't support references or optional field detection
 
 import arcs.sdk.*
-${this.opts.wasm ? 'import arcs.sdk.wasm.*' : 'import arcs.core.data.RawEntity\nimport arcs.core.data.util.toReferencable'}
+${platformSpecificImports[this.opts.platform].join('\n')}
 `;
   }
 
@@ -86,22 +99,24 @@ ${this.opts.wasm ? 'import arcs.sdk.wasm.*' : 'import arcs.core.data.RawEntity\n
       handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${this.getType(handleConcreteType) + 'Impl'}(particle, "${handleName}", ${entityType}_Spec())`);
     }
     return `
-class ${particleName}Handles(particle : ${this.opts.wasm ? 'WasmParticleImpl' : 'BaseParticle'}) {
+class ${particleName}Handles(particle : ${this.opts.dev ? 'WasmParticleImpl' : 'BaseParticle'}) {
     ${handleDecls.join('\n    ')}
 }
 
-abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' : 'BaseParticle'}() {
+abstract class Abstract${particleName} : ${this.opts.dev ? 'WasmParticleImpl' : 'BaseParticle'}() {
     protected val handles: ${particleName}Handles = ${particleName}Handles(this)
 }
 `;
   }
 
   private getType(type: string): string {
-    return this.opts.wasm ? `Wasm${type}` : type;
+    return this.opts.dev ? `Wasm${type}` : type;
   }
 }
 
 class KotlinGenerator implements ClassGenerator {
+  platform: string;
+  dev: boolean;
   fields: string[] = [];
   fieldVals: string[] = [];
   setFields: string[] = [];
@@ -115,7 +130,10 @@ class KotlinGenerator implements ClassGenerator {
   fieldSerializes: string[] = [];
   fieldsForToString: string[] = [];
 
-  constructor(readonly node: SchemaNode, private readonly opts: minimist.ParsedArgs) {}
+  constructor(readonly node: SchemaNode, private opts: minimist.ParsedArgs) {
+    this.platform = opts.platform;
+    this.dev = this.platform !== 'jvm';
+  }
 
   // TODO: allow optional fields in kotlin
   addField(field: string, typeChar: string, isOptional: boolean, refClassName: string|null) {
@@ -191,7 +209,7 @@ class ${name}() : ${this.getType('Entity')} {
     }
 
     override fun schemaHash() = "${schemaHash}"
-${this.opts.wasm ? `
+${this.opts.dev ? `
     override fun encodeEntity(): NullTermByteArray {
         val encoder = StringEncoder()
         encoder.encode("", internalId)
@@ -211,7 +229,7 @@ ${this.opts.wasm ? `
 class ${name}_Spec() : ${this.getType('EntitySpec')}<${name}> {
 
     override fun create() = ${name}()
-${this.opts.wasm ? `
+${this.opts.dev ? `
     override fun decode(encoded: ByteArray): ${name}? {
         if (encoded.isEmpty()) return null
 
@@ -250,6 +268,6 @@ ${typeDecls.length ? typeDecls.join('\n') + '\n' : ''}`;
   }
 
   private getType(type: string): string {
-    return this.opts.wasm ? `Wasm${type}` : `Jvm${type}`;
+    return this.opts.dev ? `Wasm${type}` : `Jvm${type}`;
   }
 }

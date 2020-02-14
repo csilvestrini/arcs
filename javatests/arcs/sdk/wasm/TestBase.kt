@@ -11,6 +11,10 @@
 
 package arcs.sdk.wasm
 
+import arcs.sdk.dev.WasmCollectionImpl
+import arcs.sdk.dev.WasmEntity
+import arcs.sdk.dev.WasmEntitySpec
+import arcs.sdk.dev.WasmParticleImpl
 import kotlin.AssertionError
 import kotlin.test.Asserter
 

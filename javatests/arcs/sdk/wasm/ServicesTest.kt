@@ -11,6 +11,9 @@
 
 package arcs.sdk.wasm
 
+import arcs.sdk.dev.resolveUrl
+import arcs.sdk.dev.serviceRequest
+
 class ServicesTest : AbstractServicesTest() {
     override fun init() {
         val url: String = resolveUrl("\$resolve-me")

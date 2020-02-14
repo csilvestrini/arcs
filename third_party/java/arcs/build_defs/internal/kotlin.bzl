@@ -60,7 +60,7 @@ ALL_PLATFORMS = ["jvm", "js", "wasm"]
 DEFAULT_LIBRARY_PLATFORMS = ["jvm", "js"]
 
 # Default set of platforms for Kotlin particles.
-DEFAULT_PARTICLE_PLATFORMS = ["jvm", "wasm"]
+DEFAULT_PARTICLE_PLATFORMS = ALL_PLATFORMS
 
 def arcs_kt_jvm_library(**kwargs):
     """Wrapper around kt_jvm_library for Arcs.
@@ -159,9 +159,8 @@ def arcs_kt_library(
     if "js" in platforms:
         arcs_kt_js_library(
             name = name + _JS_SUFFIX,
-            # Exclude any wasm-specific srcs.
-            # TODO: jvm srcs will be included here. That is not what we want.
-            srcs = [src for src in srcs if not src.endswith(".wasm.kt")],
+            # Exclude any jvm-specific srcs (js uses wasm srcs, for the most part...)
+            srcs = [src for src in srcs if not src.endswith(".jvm.kt")],
             deps = [_to_js_dep(dep) for dep in deps],
             visibility = visibility,
         )

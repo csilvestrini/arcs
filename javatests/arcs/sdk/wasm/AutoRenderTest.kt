@@ -12,6 +12,7 @@
 package arcs.sdk.wasm
 
 import arcs.sdk.Handle
+import arcs.sdk.dev.renderOutput
 
 class AutoRenderTest : AbstractAutoRenderTest() {
     override fun init() = renderOutput()

@@ -12,6 +12,8 @@
 package arcs.sdk.wasm
 
 import arcs.sdk.Handle
+import arcs.sdk.dev.WasmCollectionImpl
+import arcs.sdk.dev.WasmSingletonImpl
 
 class UnicodeTest : AbstractUnicodeTest() {
     override fun onHandleUpdate(handle: Handle) {
