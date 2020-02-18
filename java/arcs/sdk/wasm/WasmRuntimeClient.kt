@@ -15,13 +15,13 @@ object WasmRuntimeClient {
     fun <T : WasmEntity> singletonClear(
         particle: WasmParticleImpl,
         singleton: WasmSingletonImpl<T>
-    ) = singletonClear(particle.toAddress(), singleton.toAddress())
+    ) = WasmExternal.singletonClear(particle.toAddress(), singleton.toAddress())
 
     fun <T : WasmEntity> singletonSet(
         particle: WasmParticleImpl,
         singleton: WasmSingletonImpl<T>,
         encoded: NullTermByteArray
-    ) = singletonSet(
+    ) = WasmExternal.singletonSet(
         particle.toAddress(),
         singleton.toAddress(),
         encoded.bytes.toWasmAddress()
@@ -31,7 +31,7 @@ object WasmRuntimeClient {
         particle: WasmParticleImpl,
         collection: WasmCollectionImpl<T>,
         encoded: NullTermByteArray
-    ) = collectionRemove(
+    ) = WasmExternal.collectionRemove(
         particle.toAddress(),
         collection.toAddress(),
         encoded.bytes.toWasmAddress()
@@ -40,15 +40,14 @@ object WasmRuntimeClient {
     fun <T : WasmEntity> collectionClear(
         particle: WasmParticleImpl,
         collection: WasmCollectionImpl<T>
-    ) =
-        collectionClear(particle.toAddress(), collection.toAddress())
+    ) = WasmExternal.collectionClear(particle.toAddress(), collection.toAddress())
 
     fun <T : WasmEntity> collectionStore(
         particle: WasmParticleImpl,
         collection: WasmCollectionImpl<T>,
         encoded: NullTermByteArray
     ): String? {
-        val wasmId = collectionStore(
+        val wasmId = WasmExternal.collectionStore(
             particle.toAddress(),
             collection.toAddress(),
             encoded.bytes.toWasmAddress()
@@ -59,7 +58,7 @@ object WasmRuntimeClient {
     fun log(msg: String) = arcs.sdk.wasm.log(msg)
 
     fun onRenderOutput(particle: WasmParticleImpl, template: String?, model: NullTermByteArray?) =
-        onRenderOutput(
+        WasmExternal.onRenderOutput(
             particle.toAddress(),
             template.toWasmNullableString(),
             model?.bytes?.toWasmAddress() ?: 0
@@ -70,7 +69,7 @@ object WasmRuntimeClient {
         call: String,
         encoded: NullTermByteArray,
         tag: String
-    ) = serviceRequest(
+    ) = WasmExternal.serviceRequest(
         particle.toAddress(),
         call.toWasmString(),
         encoded.bytes.toWasmAddress(),
@@ -78,7 +77,7 @@ object WasmRuntimeClient {
     )
 
     fun resolveUrl(url: String): String {
-        val r: WasmString = resolveUrl(url.toWasmString())
+        val r: WasmString = WasmExternal.resolveUrl(url.toWasmString())
         val resolved = r.toKString()
         _free(r)
         return resolved

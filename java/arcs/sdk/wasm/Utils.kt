@@ -19,7 +19,7 @@ import arcs.sdk.wasm.WasmRuntimeClient
 object Utils : UtilsInterface {
     override fun log(msg: String) = arcs.sdk.wasm.log(msg)
 
-    override fun abort() = arcs.sdk.wasm.abort()
+    override fun abort() = arcs.sdk.wasm.WasmExternal.abort()
 
     override fun assert(message: String, cond: Boolean) {
         if (cond) return

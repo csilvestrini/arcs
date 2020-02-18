@@ -20,6 +20,7 @@ import kotlinx.cinterop.NativePtr
 import kotlinx.cinterop.toCPointer
 import kotlinx.cinterop.toKStringFromUtf8
 import kotlinx.cinterop.toLong
+import arcs.sdk.wasm.WasmExternal.addressOfElement
 
 // Model WasmAddress as an Int
 typealias WasmAddress = Address
@@ -60,9 +61,6 @@ fun WasmNullableString.toByteArray(): ByteArray {
     return this.toNullableKString()?.encodeToByteArray() ?: ByteArray(0)
 }
 
-@SymbolName("Kotlin_Arrays_getByteArrayAddressOfElement")
-external fun ByteArray.addressOfElement(index: Int): CPointer<ByteVar>
-
 /** Convert a ByteArray into a WasmAddress */
 fun ByteArray.toWasmAddress(): WasmAddress {
     return this.addressOfElement(0).toLong().toWasmAddress()
@@ -84,27 +82,17 @@ fun String?.toWasmNullableString(): WasmNullableString {
     return this?.let { it.toWasmString() } ?: 0
 }
 
-// these are exported methods in the C++ runtime
-@SymbolName("Kotlin_interop_malloc")
-private external fun kotlinMalloc(size: Long, align: Int): NativePtr
-
-@SymbolName("Kotlin_interop_free")
-private external fun kotlinFree(ptr: NativePtr)
-
-@SymbolName("abort")
-external fun abort()
-
 // Re-export the native C++ runtime methods to JS as _malloc/_free
 @Retain
 @ExportForCppRuntime("_malloc")
 fun _malloc(size: Int): WasmAddress {
-    return kotlinMalloc(size.toLong(), 1).toWasmAddress()
+    return WasmExternal.kotlinMalloc(size.toLong(), 1).toWasmAddress()
 }
 
 @Retain
 @ExportForCppRuntime("_free")
 fun _free(ptr: WasmAddress) {
-    return kotlinFree(ptr.toPtr())
+    return WasmExternal.kotlinFree(ptr.toPtr())
 }
 
 // //////////////////////////////////////// //
@@ -194,54 +182,7 @@ fun renderOutput(particlePtr: WasmAddress) {
         ?.renderOutput()
 }
 
-@SymbolName("_singletonSet")
-external fun singletonSet(particlePtr: WasmAddress, handlePtr: WasmAddress, stringPtr: WasmString)
-
-@SymbolName("_singletonClear")
-external fun singletonClear(particlePtr: WasmAddress, handlePtr: WasmAddress)
-
-@SymbolName("_collectionStore")
-external fun collectionStore(
-    particlePtr: WasmAddress,
-    handlePtr: WasmAddress,
-    stringPtr: WasmString
-): WasmString
-
-@SymbolName("_collectionRemove")
-external fun collectionRemove(
-    particlePtr: WasmAddress,
-    handlePtr: WasmAddress,
-    stringPtr: WasmString
-)
-
-@SymbolName("_collectionClear")
-external fun collectionClear(particlePtr: WasmAddress, handlePtr: WasmAddress)
-
-@SymbolName("_onRenderOutput")
-external fun onRenderOutput(
-    particlePtr: WasmAddress,
-    templatePtr: WasmNullableString,
-    modelPtr: WasmNullableString
-)
-
-@SymbolName("_serviceRequest")
-external fun serviceRequest(
-    particlePtr: WasmAddress,
-    callPtr: WasmString,
-    argsPtr: WasmString,
-    tagPtr: WasmString
-)
-
-@SymbolName("_resolveUrl")
-external fun resolveUrl(urlPtr: WasmString): WasmString
-
-@SymbolName("write")
-external fun write(msg: WasmString)
-
-@SymbolName("flush")
-external fun flush()
-
 fun log(msg: String) {
-    write(msg.toWasmString())
-    flush()
+    WasmExternal.write(msg.toWasmString())
+    WasmExternal.flush()
 }
