@@ -8,13 +8,34 @@ http_archive(
     urls = ["https://github.com/bazelbuild/rules_nodejs/releases/download/0.38.1/rules_nodejs-0.38.1.tar.gz"],
 )
 
-load("@build_bazel_rules_nodejs//:index.bzl", "node_repositories")
+load(
+    "@build_bazel_rules_nodejs//:index.bzl",
+    "node_repositories", 
+    "npm_install",
+)
 
 node_repositories(
     node_version = "10.16.0",
     package_json = ["//:package.json"],
     yarn_version = "1.13.0",
 )
+
+npm_install(
+    name = "npm",
+    data = ["//:tsconfig"],
+    package_json = "//:package.json",
+    package_lock_json = "//:package-lock.json",
+)
+
+load("@npm//:install_bazel_dependencies.bzl", "install_bazel_dependencies")
+
+install_bazel_dependencies()
+
+# TypeScript
+
+load("@npm_bazel_typescript//:index.bzl", "ts_setup_workspace")
+
+ts_setup_workspace()
 
 # Install Emscripten via the emsdk.
 

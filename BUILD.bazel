@@ -1,14 +1,16 @@
+load("@npm_bazel_typescript//:index.bzl", "ts_config")
+
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-filegroup(
-    name = "tsconfig",
-    srcs = [
-        "config/tsconfig.base.json",
-        "tsconfig.json",
-    ],
-)
+# filegroup(
+#     name = "tsconfig",
+#     srcs = [
+#         "config/tsconfig.base.json",
+#         "tsconfig.json",
+#     ],
+# )
 
 filegroup(
     name = "node_modules",
@@ -62,4 +64,10 @@ filegroup(
         ".eslintrc.json",
     ],
     visibility = ["//visibility:public"],
+)
+
+ts_config(
+    name = "tsconfig",
+    src = "tsconfig.json",
+    deps = ["//config:tsconfig_base"],
 )
