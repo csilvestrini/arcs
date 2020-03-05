@@ -94,7 +94,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
     private fun expectHandleException(handleName: String, block: () -> Unit) {
         val e = assertThrows(NoSuchElementException::class, block)
         assertThat(e).hasMessageThat().isEqualTo(
-            "Handle ${handleName} not initialized in TestParticle"
+            "Handle $handleName has not been initialized in TestParticle yet."
         )
     }
 
@@ -124,30 +124,6 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             handleHolder.readWriteSetHandle
         }
     }
-
-    private suspend fun createSingletonHandle(
-        handleManager: EntityHandleManager,
-        handleName: String,
-        handleMode: HandleMode
-    ) = handleManager.createSingletonHandle(
-        handleHolder,
-        handleName,
-        singletonKey,
-        schema,
-        handleMode
-    )
-
-    private suspend fun createSetHandle(
-        handleManager: EntityHandleManager,
-        handleName: String,
-        handleMode: HandleMode
-    ) = handleManager.createSetHandle(
-        handleHolder,
-        handleName,
-        setKey,
-        schema,
-        handleMode
-    )
 
     @Test
     fun singletonHandle_writeFollowedByReadWithOnUpdate() = runBlocking {
@@ -246,4 +222,28 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         }
         assertThat(updatedEntities).containsExactly(entity1, entity2, entity3)
     }
+
+    private suspend fun createSingletonHandle(
+        handleManager: EntityHandleManager,
+        handleName: String,
+        handleMode: HandleMode
+    ) = handleManager.createSingletonHandle(
+        handleHolder.getEntitySpec(handleName),
+        handleName,
+        singletonKey,
+        schema,
+        handleMode
+    ).also { handleHolder.setHandle(handleName, it) }
+
+    private suspend fun createSetHandle(
+        handleManager: EntityHandleManager,
+        handleName: String,
+        handleMode: HandleMode
+    ) = handleManager.createSetHandle(
+        handleHolder.getEntitySpec(handleName),
+        handleName,
+        setKey,
+        schema,
+        handleMode
+    ).also { handleHolder.setHandle(handleName, it) }
 }
