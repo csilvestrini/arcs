@@ -217,7 +217,8 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
     private suspend fun performParticleLifecycle(particleContext: ParticleContext) {
         if (particleContext.particleState == ParticleState.Instantiated) {
             try {
-                // onCreate() must succeed, else we consider the particle startup failed
+                // onCreate() must succeed, else we consider the particle startup failed.
+                // TODO: We shouldn't call onCreate yet, we don't know that handles have synced.
                 particleContext.particle.onCreate()
                 particleContext.particleState = ParticleState.Created
             } catch (e: Exception) {
@@ -238,14 +239,10 @@ abstract class AbstractArcHost(vararg initialParticles: ParticleRegistration) : 
         }
 
         // This is temporary until the BaseParticle PR lands and onStartup() API lands.
-        // We force sync() calls in lieu of onStartup() API for demos
         if (particleContext.particleState == ParticleState.Created) {
             try {
-                particleContext.handles.values.forEach { handle ->
-                    particleContext.run {
-                        particleContext.particle.onHandleSync(handle, false)
-                    }
-                }
+                // TODO: We shouldn't call onReady yet, we don't know that handles have synced.
+                particleContext.particle.onReady()
             } catch (e: Exception) {
                 log.error(e) { "Failure in particle during onHandleSync." }
                 markParticleAsFailed(particleContext)

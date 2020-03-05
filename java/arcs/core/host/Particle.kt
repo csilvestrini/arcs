@@ -31,6 +31,12 @@ interface Particle {
     suspend fun onCreate() = Unit
 
     /**
+     * Called after handles are synced the first time, override to provide initial processing.
+     * This will be called after [onCreate], but will not wait for [onCreate] to finish.
+     */
+    suspend fun onReady() = Unit
+
+    /**
      * React to handle updates.
      *
      * Called for handles when change events are received from the backing store.
@@ -38,17 +44,6 @@ interface Particle {
      * @param handle Singleton or Collection handle
      */
     suspend fun onHandleUpdate(handle: Handle) = Unit
-
-    /**
-     * React to handle synchronization.
-     *
-     * Called for handles that are marked for synchronization at connection, when they are updated with the full model
-     * of their data. This will occur once after setHandles() and any time thereafter if the handle is resynchronized.
-     *
-     * @param handle Singleton or Collection handle
-     * @param allSynced flag indicating if all handles are synchronized
-     */
-    suspend fun onHandleSync(handle: Handle, allSynced: Boolean) = Unit
 
     /**
      *  Called when an [Arc] is shutdown.
