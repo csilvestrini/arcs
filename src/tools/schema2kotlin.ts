@@ -81,7 +81,8 @@ ${this.opts.wasm ?
 import arcs.core.data.*
 import arcs.core.data.util.toReferencable
 import arcs.core.data.util.ReferencablePrimitive
-import arcs.core.entity.toPrimitiveValue`}
+import arcs.core.entity.toPrimitiveValue
+import arcs.core.entity.SchemaRegistry`}
 `;
   }
 
@@ -338,12 +339,17 @@ ${this.opts.wasm ? `
 ` : ''}
     companion object : ${this.prefixTypeForRuntime('EntitySpec')}<${name}> {
         ${this.opts.wasm ? '' : `
-        override val SCHEMA = ${leftPad(this.createSchema(schemaHash), 8, true)}.also { SchemaRegistry.register(it) }`}
+        override val SCHEMA = ${leftPad(this.createSchema(schemaHash), 8, true)}
+        
+        init {
+          SchemaRegistry.register(this)
+        }`}
 
-        override fun create() = ${name}()
         ${!this.opts.wasm ? `
         // TODO: only handles singletons for now
-        override fun deserialize(data: RawEntity) = create().apply { deserialize(data) }` : `
+        override fun deserialize(data: RawEntity) = ${name}().apply { deserialize(data) }` : `
+        override fun create() = ${name}()
+
         override fun decode(encoded: ByteArray): ${name}? {
             if (encoded.isEmpty()) return null
     
