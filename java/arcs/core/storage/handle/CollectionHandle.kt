@@ -38,7 +38,6 @@ typealias CollectionBase<T> = Handle<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set
  */
 class CollectionHandle<T : Referencable>(
     name: String,
-    storageKey: StorageKey,
     storageProxy: CollectionProxy<T>,
     ttl: Ttl = Ttl.Infinite,
     time: Time,
@@ -46,7 +45,6 @@ class CollectionHandle<T : Referencable>(
     private val schema: Schema? = null
 ) : CollectionBase<T>(
     name,
-    storageKey,
     storageProxy,
     ttl,
     time,

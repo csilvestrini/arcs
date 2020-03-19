@@ -38,7 +38,6 @@ typealias SingletonStoreOptions<T> = StoreOptions<SingletonData<T>, SingletonOp<
  */
 class SingletonHandle<T : Referencable>(
     name: String,
-    storageKey: StorageKey,
     storageProxy: SingletonProxy<T>,
     ttl: Ttl = Ttl.Infinite,
     time: Time,
@@ -46,7 +45,6 @@ class SingletonHandle<T : Referencable>(
     private val schema: Schema? = null
 ) : SingletonBase<T>(
     name,
-    storageKey,
     storageProxy,
     ttl,
     time,

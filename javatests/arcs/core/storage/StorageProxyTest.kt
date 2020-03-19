@@ -273,13 +273,9 @@ class StorageProxyTest {
     private fun newHandle(
         name: String,
         storageProxy: StorageProxy<CrdtData, CrdtOperationAtTime, String>
-    ) = Handle(name, STORAGE_KEY, storageProxy, Ttl.Infinite, TimeImpl(), null)
+    ) = Handle(name, storageProxy, Ttl.Infinite, TimeImpl(), null)
 
     fun CrdtModel<CrdtData, CrdtOperationAtTime, String>.appliesOpAs(op: CrdtOperationAtTime, result: Boolean) {
         whenever(this.applyOperation(op)).thenReturn(result)
-    }
-
-    companion object {
-        private val STORAGE_KEY = DummyStorageKey("key")
     }
 }

@@ -79,8 +79,6 @@ ${this.opts.wasm ?
       `import arcs.sdk.wasm.*` :
       `\
 import arcs.core.data.*
-import arcs.core.data.util.toReferencable
-import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.entity.toPrimitiveValue
 import arcs.core.entity.SchemaRegistry`}
 `;
@@ -340,16 +338,13 @@ ${this.opts.wasm ? `
     companion object : ${this.prefixTypeForRuntime('EntitySpec')}<${name}> {
         ${this.opts.wasm ? '' : `
         override val SCHEMA = ${leftPad(this.createSchema(schemaHash), 8, true)}
-        
-        init {
-          SchemaRegistry.register(this)
-        }`}
 
+        init {
+            SchemaRegistry.register(this)
+        }`}
         ${!this.opts.wasm ? `
         // TODO: only handles singletons for now
         override fun deserialize(data: RawEntity) = ${name}().apply { deserialize(data) }` : `
-        override fun create() = ${name}()
-
         override fun decode(encoded: ByteArray): ${name}? {
             if (encoded.isEmpty()) return null
     
@@ -376,7 +371,7 @@ ${this.opts.wasm ? `
                 decoder.validate("|")
                 i++
             }`)}
-            val _rtn = create().copy(
+            val _rtn = ${name}().copy(
                 ${ktUtils.joinWithIndents(this.fieldsForCopy, 33, 3)}
             )
             _rtn.entityId = entityId
