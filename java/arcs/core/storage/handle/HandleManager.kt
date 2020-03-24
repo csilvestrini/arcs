@@ -23,6 +23,7 @@ import arcs.core.data.SingletonType
 import arcs.core.data.Ttl
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.ActiveStore
+import arcs.core.storage.Dereferencer
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageMode
@@ -65,8 +66,8 @@ class Stores {
  */
 class HandleManager(
     private val time: Time,
-    private val stores: Stores = Stores(),
-    private val activationFactory: ActivationFactory? = null
+    val stores: Stores = Stores(),
+    val activationFactory: ActivationFactory? = null
 ) {
     private val singletonProxiesMutex = Mutex()
     private val singletonProxies by guardedBy(
@@ -97,7 +98,8 @@ class HandleManager(
         storageKey: StorageKey,
         schema: Schema,
         name: String = storageKey.toKeyString(),
-        ttl: Ttl = Ttl.Infinite
+        ttl: Ttl = Ttl.Infinite,
+        dereferencerFactory: Dereferencer.Factory<RawEntity>? = null
     ): SingletonHandle<RawEntity> {
         val storeOptions = SingletonStoreOptions<RawEntity>(
             storageKey = storageKey,
@@ -119,8 +121,8 @@ class HandleManager(
             storageProxy,
             ttl,
             time,
-            dereferencer = RawEntityDereferencer(schema, stores, activationFactory),
-            schema = schema
+            schema,
+            dereferencerFactory
         )
     }
 
@@ -132,7 +134,8 @@ class HandleManager(
         storageKey: StorageKey,
         schema: Schema,
         name: String = storageKey.toKeyString(),
-        ttl: Ttl = Ttl.Infinite
+        ttl: Ttl = Ttl.Infinite,
+        dereferencerFactory: Dereferencer.Factory<RawEntity>? = null
     ): SingletonHandle<Reference> {
         val storeOptions = SingletonStoreOptions<Reference>(
             storageKey = storageKey,
@@ -154,8 +157,8 @@ class HandleManager(
             storageProxy,
             ttl,
             time,
-            dereferencer = RawEntityDereferencer(schema, stores, activationFactory),
-            schema = schema
+            schema,
+            dereferencerFactory
         )
     }
 
@@ -168,7 +171,8 @@ class HandleManager(
         storageKey: StorageKey,
         schema: Schema,
         name: String = storageKey.toKeyString(),
-        ttl: Ttl = Ttl.Infinite
+        ttl: Ttl = Ttl.Infinite,
+        dereferencerFactory: Dereferencer.Factory<RawEntity>? = null
     ): CollectionHandle<RawEntity> {
         val storeOptions = CollectionStoreOptions<RawEntity>(
             storageKey = storageKey,
@@ -190,8 +194,8 @@ class HandleManager(
             storageProxy,
             ttl,
             time,
-            dereferencer = RawEntityDereferencer(schema, stores, activationFactory),
-            schema = schema
+            schema,
+            dereferencerFactory
         )
     }
 
@@ -203,7 +207,8 @@ class HandleManager(
         storageKey: StorageKey,
         schema: Schema,
         name: String = storageKey.toKeyString(),
-        ttl: Ttl = Ttl.Infinite
+        ttl: Ttl = Ttl.Infinite,
+        dereferencerFactory: Dereferencer.Factory<RawEntity>? = null
     ): CollectionHandle<Reference> {
         val storeOptions = CollectionStoreOptions<Reference>(
             storageKey = storageKey,
@@ -225,8 +230,8 @@ class HandleManager(
             storageProxy = storageProxy,
             ttl = ttl,
             time = time,
-            dereferencer = RawEntityDereferencer(schema, stores, activationFactory),
-            schema = schema
+            schema = schema,
+            dereferencerFactory = dereferencerFactory
         )
     }
 }

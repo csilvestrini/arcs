@@ -78,7 +78,13 @@ class RawEntityDereferencer(
 
             // Only return the item if we've actually managed to pull it out of storage, and that
             // it matches the schema we wanted.
-            deferred.await()?.takeIf { it matches schema }?.copy(id = reference.id)
+//            deferred.await()?.takeIf { it matches schema }?.copy(id = reference.id)
+            var result = deferred.await()
+            if (result == null) {
+                return@withContext null
+            }
+            result = result.copy(id = reference.id)
+            result
         }
     }
 }

@@ -6,8 +6,13 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.util.toReferencable
+import arcs.core.entity.Entity
+import arcs.core.entity.EntityDereferencerFactory
+import arcs.core.entity.EntitySpec
+import arcs.core.entity.SchemaRegistry
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.Reference
+import arcs.core.storage.StorageKey
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -16,6 +21,7 @@ import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.test.runBlockingTest
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
@@ -29,7 +35,8 @@ open class HandleManagerTestBase {
             "name" to "Jason".toReferencable(),
             "age" to 21.toReferencable(),
             "is_cool" to false.toReferencable(),
-            "best_friend" to Reference("entity2", backingKey, null)
+            "best_friend" to Reference("entity2", backingKey, null),
+            "hat" to null
         ),
         collections = emptyMap()
     )
@@ -40,7 +47,8 @@ open class HandleManagerTestBase {
             "name" to "Jason".toReferencable(),
             "age" to 22.toReferencable(),
             "is_cool" to true.toReferencable(),
-            "best_friend" to Reference("entity1", backingKey, null)
+            "best_friend" to Reference("entity1", backingKey, null),
+            "hat" to null
         ),
         collections = emptyMap()
     )
@@ -52,12 +60,32 @@ open class HandleManagerTestBase {
                 "name" to FieldType.Text,
                 "age" to FieldType.Number,
                 "is_cool" to FieldType.Boolean,
-                "best_friend" to FieldType.EntityRef("1234acf")
+                "best_friend" to FieldType.EntityRef("person-hash"),
+                "hat" to FieldType.EntityRef("hat-hash")
             ),
             collections = emptyMap()
         ),
-        "1234acf"
+        "person-hash"
     )
+    private val entitySpec = object : EntitySpec<Entity> {
+        override fun deserialize(data: RawEntity) = throw NotImplementedError()
+
+        override val SCHEMA = schema
+    }
+
+    private val hatSchema = Schema(
+        listOf(SchemaName("Hat")),
+        SchemaFields(
+            singletons = mapOf("style" to FieldType.Text),
+            collections = emptyMap()
+        ),
+        "hat-hash"
+    )
+    private val hatEntitySpec = object : EntitySpec<Entity> {
+        override fun deserialize(data: RawEntity) = throw NotImplementedError()
+
+        override val SCHEMA = hatSchema
+    }
 
     private val singletonRefKey = RamDiskStorageKey("single-ent")
     private val singletonKey = ReferenceModeStorageKey(
@@ -65,10 +93,16 @@ open class HandleManagerTestBase {
         storageKey = singletonRefKey
     )
 
-    private val setRefKey = RamDiskStorageKey("set-ent")
-    private val setKey = ReferenceModeStorageKey(
+    private val collectionRefKey = RamDiskStorageKey("set-ent")
+    private val collectionKey = ReferenceModeStorageKey(
         backingKey = backingKey,
-        storageKey = setRefKey
+        storageKey = collectionRefKey
+    )
+
+    private val hatCollectionRefKey = RamDiskStorageKey("set-ent")
+    private val hatCollectionKey = ReferenceModeStorageKey(
+        backingKey = backingKey,
+        storageKey = hatCollectionRefKey
     )
 
 
@@ -80,28 +114,36 @@ open class HandleManagerTestBase {
     }
 
     @Before
-    fun setup() {
-        RamDisk.clear()
+    open fun setUp() {
+        SchemaRegistry.register(entitySpec)
+        SchemaRegistry.register(hatEntitySpec)
         DriverFactory.register(RamDiskDriverProvider())
+    }
+
+    @After
+    open fun tearDown() {
+        RamDisk.clear()
+        DriverFactory.clearRegistrations()
+        SchemaRegistry.clearForTest()
     }
 
     @Test
     fun singleton_writeAndReadBack() = testRunner {
-        val writeHandle = writeHandleManager.rawEntitySingletonHandle(singletonKey, schema)
+        val writeHandle = createSingletonHandle(writeHandleManager, singletonKey)
         writeHandle.store(entity1)
 
         // Now read back from a different handle
-        val readHandle = readHandleManager.rawEntitySingletonHandle(singletonKey, schema)
+        val readHandle = createSingletonHandle(readHandleManager, singletonKey)
         val readBack = readHandle.fetch()
         assertThat(readBack).isEqualTo(entity1)
     }
 
     @Test
     open fun singleton_writeAndOnUpdate() = testRunner {
-        val writeHandle = writeHandleManager.rawEntitySingletonHandle(singletonKey, schema)
+        val writeHandle = createSingletonHandle(writeHandleManager, singletonKey)
 
         // Now read back from a different handle
-        val readHandle = readHandleManager.rawEntitySingletonHandle(singletonKey, schema)
+        val readHandle = createSingletonHandle(readHandleManager, singletonKey)
         val updateDeferred = CompletableDeferred<RawEntity?>()
         readHandle.addOnUpdate {
             updateDeferred.complete(it)
@@ -112,7 +154,11 @@ open class HandleManagerTestBase {
 
     @Test
     open fun singleton_referenceLiveness() = testRunner {
-        val writeHandle = writeHandleManager.referenceSingletonHandle(singletonRefKey, schema, "refhandle")
+        val writeHandle = writeHandleManager.referenceSingletonHandle(
+            singletonRefKey,
+            schema,
+            "refhandle"
+        )
         val entity1Ref = writeHandle.createReference(entity1, backingKey)
         writeHandle.store(entity1Ref)
 
@@ -126,7 +172,11 @@ open class HandleManagerTestBase {
         assertThat(readBack.isDead(coroutineContext)).isTrue()
 
         // Now write the entity via a different handle
-        val entityWriteHandle = writeHandleManager.rawEntitySingletonHandle(singletonKey, schema, "entHandle")
+        val entityWriteHandle = createSingletonHandle(
+            writeHandleManager,
+            singletonKey,
+            name = "entHandle"
+        )
         entityWriteHandle.store(entity1)
 
         // Reference should be alive.
@@ -151,20 +201,14 @@ open class HandleManagerTestBase {
 
     @Test
     fun singleton_dereferenceEntity() = testRunner {
-        val writeHandle = writeHandleManager.rawEntitySingletonHandle(singletonKey, schema)
-        val readHandle = readHandleManager.rawEntitySingletonHandle(singletonKey, schema)
+        val writeHandle = createSingletonHandle(writeHandleManager, singletonKey)
+        val readHandle = createSingletonHandle(readHandleManager, singletonKey)
         writeHandle.store(entity1)
 
         // Create a second handle for the second entity, so we can store it.
         val storageKey = ReferenceModeStorageKey(backingKey, RamDiskStorageKey("entity2"))
-        val refWriteHandle = writeHandleManager.rawEntitySingletonHandle(
-            storageKey,
-            schema
-        )
-        val refReadHandle = readHandleManager.rawEntitySingletonHandle(
-            storageKey,
-            schema
-        )
+        val refWriteHandle = createSingletonHandle(writeHandleManager, storageKey)
+        val refReadHandle = createSingletonHandle(readHandleManager, storageKey)
         refWriteHandle.store(entity2)
 
         // Now read back entity1, and dereference its best_friend.
@@ -185,23 +229,54 @@ open class HandleManagerTestBase {
     }
 
     @Test
+    fun singleton_dereferenceEntity_nestedReference() = testRunner {
+        // Create a stylish new hat, and create a reference to it.
+        val hatCollection = createCollectionHandle(writeHandleManager,
+            hatCollectionKey,
+            hatSchema
+        )
+        val fez = RawEntity(
+            id = "fez-id",
+            singletons = mapOf("style" to "fez".toReferencable()),
+            collections = emptyMap()
+        )
+        hatCollection.store(fez)
+        val fezRef = hatCollection.createReference(fez, backingKey)
+
+        // Give the hat to an entity and store it.
+        val singletons = entity1.singletons.toMutableMap()
+        singletons["hat"] = fezRef
+        val entityWithHat = entity1.copy(singletons = singletons)
+        val writeHandle = createSingletonHandle(writeHandleManager, singletonKey)
+        writeHandle.store(entityWithHat)
+
+        // Read out the entity, and fetch its hat.
+        val readHandle = createSingletonHandle(readHandleManager, singletonKey)
+        val entityOut = readHandle.fetch()!!
+        assertThat(entityOut).isEqualTo(entityWithHat)
+        val hatRef = entityOut.singletons["hat"] as Reference
+        val hat = hatRef.dereference(coroutineContext)
+        assertThat(hat).isEqualTo(fez)
+    }
+
+    @Test
     fun collection_writeAndReadBack() = testRunner {
-        val writeHandle = writeHandleManager.rawEntityCollectionHandle(setKey, schema)
+        val writeHandle = createCollectionHandle(writeHandleManager, collectionKey)
         writeHandle.store(entity1)
         writeHandle.store(entity2)
 
         // Now read back from a different handle
-        val readHandle = readHandleManager.rawEntityCollectionHandle(setKey, schema)
+        val readHandle = createCollectionHandle(readHandleManager, collectionKey)
         val readBack = readHandle.fetchAll()
         assertThat(readBack).containsExactly(entity1, entity2)
     }
 
     @Test
     open fun collection_writeAndOnUpdate() = testRunner {
-        val writeHandle = writeHandleManager.rawEntityCollectionHandle(singletonKey, schema)
+        val writeHandle = createCollectionHandle(writeHandleManager, singletonKey)
 
         // Now read back from a different handle
-        val readHandle = readHandleManager.rawEntityCollectionHandle(singletonKey, schema)
+        val readHandle = createCollectionHandle(readHandleManager, singletonKey)
         val updateDeferred = CompletableDeferred<Set<RawEntity>>()
         writeHandle.store(entity1)
         readHandle.addOnUpdate {
@@ -233,7 +308,11 @@ open class HandleManagerTestBase {
         assertThat(readBackEntity2Ref.isDead(coroutineContext)).isTrue()
 
         // Now write the entity via a different handle
-        val entityHandle = writeHandleManager.rawEntityCollectionHandle(singletonKey, schema, "entHandle")
+        val entityHandle = createCollectionHandle(
+            writeHandleManager,
+            singletonKey,
+            name = "entHandle"
+        )
         entityHandle.store(entity1)
         entityHandle.store(entity2)
 
@@ -265,11 +344,11 @@ open class HandleManagerTestBase {
 
     @Test
     fun collection_entityDereference() = testRunner {
-        val writeHandle = writeHandleManager.rawEntityCollectionHandle(setKey, schema)
+        val writeHandle = createCollectionHandle(writeHandleManager, collectionKey)
         writeHandle.store(entity1)
         writeHandle.store(entity2)
 
-        val readHandle = readHandleManager.rawEntityCollectionHandle(setKey, schema)
+        val readHandle = createCollectionHandle(readHandleManager, collectionKey)
         readHandle.fetchAll().also { assertThat(it).hasSize(2) }.forEach { entity ->
             val expectedBestFriend = if (entity.id == "entity1") entity2 else entity1
             val actualBestFriend = (entity.singletons["best_friend"] as Reference)
@@ -277,4 +356,58 @@ open class HandleManagerTestBase {
             assertThat(actualBestFriend).isEqualTo(expectedBestFriend)
         }
     }
+
+    @Test
+    fun collection_dereferenceEntity_nestedReference() = testRunner {
+        // Create a stylish new hat, and create a reference to it.
+        val hatCollection = createCollectionHandle(writeHandleManager, hatCollectionKey)
+        val fez = RawEntity(
+            id = "fez-id",
+            singletons = mapOf("style" to "fez".toReferencable()),
+            collections = emptyMap()
+        )
+        hatCollection.store(fez)
+        val fezRef = hatCollection.createReference(fez, backingKey)
+
+        // Give the hat to an entity and store it.
+        val singletons = entity1.singletons.toMutableMap()
+        singletons["hat"] = fezRef
+        val entityWithHat = entity1.copy(singletons = singletons)
+        val writeHandle = createCollectionHandle(writeHandleManager, collectionKey)
+        writeHandle.store(entityWithHat)
+
+        // Read out the entity, and fetch its hat.
+        val readHandle = createCollectionHandle(readHandleManager, collectionKey)
+        val entityOut = readHandle.fetchAll().single { it.id == "entity1" }
+        assertThat(entityOut).isEqualTo(entityWithHat)
+        val hatRef = entityOut.singletons["hat"] as Reference
+        val hat = hatRef.dereference(coroutineContext)
+        assertThat(hat).isEqualTo(fez)
+    }
+
+    /** Helper method for creating singleton handles. */
+    private suspend fun createSingletonHandle(
+        handleManager: HandleManager,
+        storageKey: StorageKey,
+        schema: Schema = this.schema,
+        name: String = storageKey.toKeyString()
+    ) = handleManager.rawEntitySingletonHandle(
+        storageKey,
+        schema,
+        name,
+        dereferencerFactory = EntityDereferencerFactory(handleManager.stores)
+    )
+
+    /** Helper method for creating collection handles. */
+    private suspend fun createCollectionHandle(
+        handleManager: HandleManager,
+        storageKey: StorageKey,
+        schema: Schema = this.schema,
+        name: String = storageKey.toKeyString()
+    ) = handleManager.rawEntityCollectionHandle(
+        storageKey,
+        schema,
+        name,
+        dereferencerFactory = EntityDereferencerFactory(handleManager.stores)
+    )
 }

@@ -25,7 +25,8 @@ open class AndroidHandleManagerTestBase : HandleManagerTestBase(), LifecycleOwne
     }
 
     @Before
-    fun setUp() {
+    override fun setUp() {
+        super.setUp()
         lifecycle = LifecycleRegistry(this).apply {
             setCurrentState(Lifecycle.State.CREATED)
             setCurrentState(Lifecycle.State.STARTED)

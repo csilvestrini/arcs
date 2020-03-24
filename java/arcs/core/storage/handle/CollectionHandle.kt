@@ -40,14 +40,15 @@ class CollectionHandle<T : Referencable>(
     storageProxy: CollectionProxy<T>,
     ttl: Ttl = Ttl.Infinite,
     time: Time,
-    dereferencer: Dereferencer<RawEntity>? = null,
-    private val schema: Schema? = null
+    schema: Schema? = null,
+    dereferencerFactory: Dereferencer.Factory<RawEntity>? = null
 ) : CollectionBase<T>(
     name,
     storageProxy,
     ttl,
     time,
-    dereferencer = dereferencer
+    schema,
+    dereferencerFactory
 ) {
     /** Return the number of items in the storage proxy view of the collection. */
     suspend fun size(): Int = value().size
@@ -87,18 +88,18 @@ class CollectionHandle<T : Referencable>(
      * operation (such as removing a non-existent entity from a collection). You should fetch the
      * latest value of the handle and retry if your change still makes sense on the updated value.
      */
+    @Suppress("GoodTime") // use Instant
     suspend fun store(entity: T): Boolean {
         log.debug { "Storing: $entity" }
         checkNotClosed()
 
         if (entity.creationTimestamp == RawEntity.UNINITIALIZED_TIMESTAMP) {
-            @Suppress("GoodTime") // use Instant
             entity.creationTimestamp = requireNotNull(time).currentTimeMillis
         }
         require(entity !is RawEntity || schema == null || schema.refinement(entity)) {
             "Invalid entity stored to handle $name (failed refinement)"
         }
-        if (!Ttl.Infinite.equals(ttl) &&
+        if (ttl != Ttl.Infinite &&
                 entity.expirationTimestamp == RawEntity.UNINITIALIZED_TIMESTAMP) {
             @Suppress("GoodTime") // use Instant
             entity.expirationTimestamp = ttl.calculateExpiration(time)

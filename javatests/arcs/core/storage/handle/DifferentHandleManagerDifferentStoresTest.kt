@@ -10,17 +10,18 @@ import org.junit.runners.JUnit4
 class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
 
     @Before
-    fun setUp() {
+    override fun setUp() {
+        super.setUp()
         readHandleManager = HandleManager(TimeImpl(), Stores())
         writeHandleManager = HandleManager(TimeImpl(), Stores())
     }
 
-    // TODO - fix these?
-    override fun collection_referenceLiveness() {}
-    override fun singleton_referenceLiveness() {}
-
-    // We don't expect these to pass, since Operations won't make it through the driver level
-    override fun singleton_writeAndOnUpdate() {}
-    override fun collection_writeAndOnUpdate() {}
+//    // TODO - fix these?
+//    override fun collection_referenceLiveness() {}
+//    override fun singleton_referenceLiveness() {}
+//
+//    // We don't expect these to pass, since Operations won't make it through the driver level
+//    override fun singleton_writeAndOnUpdate() {}
+//    override fun collection_writeAndOnUpdate() {}
 
 }

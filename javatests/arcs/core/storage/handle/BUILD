@@ -17,6 +17,7 @@ arcs_kt_jvm_library(
     deps = [
         "//java/arcs/core/data",
         "//java/arcs/core/data/util:data-util",
+        "//java/arcs/core/entity",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/handle",

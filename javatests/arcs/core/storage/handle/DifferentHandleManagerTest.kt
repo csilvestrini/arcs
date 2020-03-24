@@ -10,7 +10,8 @@ import org.junit.runners.JUnit4
 class DifferentHandleManagerTest : HandleManagerTestBase() {
 
     @Before
-    fun setUp() {
+    override fun setUp() {
+        super.setUp()
         val stores = Stores()
         readHandleManager = HandleManager(TimeImpl(), stores)
         writeHandleManager = HandleManager(TimeImpl(), stores)

@@ -15,6 +15,7 @@ import arcs.core.common.toArcId
 import arcs.core.data.HandleMode
 import arcs.core.data.RawEntity
 import arcs.core.entity.Entity
+import arcs.core.entity.EntityDereferencerFactory
 import arcs.core.entity.EntitySpec
 import arcs.core.entity.Handle
 import arcs.core.entity.ReadCollectionHandle
@@ -44,6 +45,10 @@ class EntityHandleManager(
     private val arcId: String = Id.Generator.newSession().newArcId("arc").toString(),
     private val hostId: String = "nohost"
 ) {
+    private val dereferencerFactory = EntityDereferencerFactory(
+        handleManager.stores,
+        handleManager.activationFactory
+    )
 
     /**
      * Creates and returns a new [SingletonHandle] for managing an [Entity].
@@ -66,7 +71,8 @@ class EntityHandleManager(
         name = idGenerator.newChildId(
             idGenerator.newChildId(arcId.toArcId(), hostId),
             name
-        ).toString()
+        ).toString(),
+        dereferencerFactory = dereferencerFactory
     ).let {
         when (mode) {
             HandleMode.Read -> ReadSingletonHandleAdapter(entitySpec, it)
@@ -92,20 +98,21 @@ class EntityHandleManager(
         storageKey: StorageKey,
         idGenerator: Id.Generator = Id.Generator.newSession()
     ) = handleManager.rawEntityCollectionHandle(
-            storageKey,
-            entitySpec.SCHEMA,
-            name = idGenerator.newChildId(
-                idGenerator.newChildId(arcId.toArcId(), hostId),
-                name
-            ).toString()
-        ).let {
-            when (mode) {
-                HandleMode.Read -> ReadCollectionHandleAdapter(entitySpec, it)
-                HandleMode.Write -> WriteCollectionHandleAdapter<T>(it, idGenerator)
-                HandleMode.ReadWrite ->
-                    ReadWriteCollectionHandleAdapter(entitySpec, it, idGenerator)
-            }
+        storageKey,
+        entitySpec.SCHEMA,
+        name = idGenerator.newChildId(
+            idGenerator.newChildId(arcId.toArcId(), hostId),
+            name
+        ).toString(),
+        dereferencerFactory = dereferencerFactory
+    ).let {
+        when (mode) {
+            HandleMode.Read -> ReadCollectionHandleAdapter(entitySpec, it)
+            HandleMode.Write -> WriteCollectionHandleAdapter<T>(it, idGenerator)
+            HandleMode.ReadWrite ->
+                ReadWriteCollectionHandleAdapter(entitySpec, it, idGenerator)
         }
+    }
 }
 
 /** A concrete readable singleton handle implementation. */

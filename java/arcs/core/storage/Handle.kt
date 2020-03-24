@@ -17,6 +17,7 @@ import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.VersionMap
 import arcs.core.data.RawEntity
+import arcs.core.data.Schema
 import arcs.core.data.Ttl
 import arcs.core.util.TaggedLog
 import arcs.core.util.Time
@@ -54,11 +55,13 @@ open class Handle<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     /**  [time] contains platform appropriate time related implementation. */
     val time: Time,
 
+    val schema: Schema? = null,
+
     /**
      * [Dereferencer] to assign to any [Reference]s which are given as return values from
      * [value].
      */
-    private val dereferencer: Dereferencer<RawEntity>? = null
+    private val dereferencerFactory: Dereferencer.Factory<RawEntity>? = null
 ) {
     protected val log = TaggedLog { "Handle($name)" }
 
@@ -89,7 +92,9 @@ open class Handle<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     /** Creates a [Reference] for a given [Referencable] and backing [StorageKey]. */
     fun createReference(referencable: Referencable, backingKey: StorageKey): Reference {
         return Reference(referencable.id, backingKey, null).also {
-            it.dereferencer = dereferencer
+            if (dereferencerFactory != null && schema != null) {
+                it.dereferencer = dereferencerFactory.create(schema)
+            }
         }
     }
 
@@ -99,28 +104,16 @@ open class Handle<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     /** Read value from the backing [StorageProxy]. */
     protected suspend fun value(): T {
         log.debug { "Fetching value." }
-        return storageProxy.getParticleView().injectDereferencer()
+        return storageProxy.getParticleView().also {
+            if (dereferencerFactory != null && schema != null) {
+                dereferencerFactory.injectDereferencers(schema, it)
+            }
+        }
     }
 
     /** Helper that subclasses can use to increment their version in a [VersionMap]. */
     protected fun VersionMap.increment(): VersionMap {
         this[name]++
-        return this
-    }
-
-    /**
-     * Recursively inject the [Dereferencer] into any [Reference]s in the receiving object.
-     */
-    @Suppress("UNCHECKED_CAST")
-    private fun <T> T.injectDereferencer(): T {
-        when (this) {
-            is Reference -> this.dereferencer = this@Handle.dereferencer
-            is RawEntity -> {
-                singletons.values.forEach { it.injectDereferencer() }
-                collections.values.forEach { it.injectDereferencer() }
-            }
-            is Set<*> -> this.forEach { it.injectDereferencer() }
-        }
         return this
     }
 
