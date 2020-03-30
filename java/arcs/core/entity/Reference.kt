@@ -26,7 +26,9 @@ class Reference<T : Entity>(
     val entityId = storageReference.id
 
     /** Returns the [Entity] pointed to by this reference. */
-    suspend fun dereference() = storageReference.dereference()?.let { entitySpec.deserialize(it) }
+    suspend fun dereference() = storageReference.dereference()?.let {
+        entitySpec.deserialize(it)
+    }
 
     /** Returns a [Referencable] for this reference. */
     /* internal */ fun toReferencable(): StorageReference = storageReference

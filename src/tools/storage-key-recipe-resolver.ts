@@ -19,7 +19,6 @@ import {RecipeResolver} from '../runtime/recipe/recipe-resolver.js';
 import {CapabilitiesResolver, StorageKeyCreatorInfo} from '../runtime/capabilities-resolver.js';
 import {Store} from '../runtime/storageNG/store.js';
 import {Exists} from '../runtime/storageNG/drivers/driver.js';
-import {TypeVariable} from '../runtime/type.js';
 import {DatabaseStorageKey, PersistentDatabaseStorageKey} from '../runtime/storageNG/database-storage-key.js';
 import {Capabilities} from '../runtime/capabilities.js';
 

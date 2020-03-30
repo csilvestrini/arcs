@@ -698,6 +698,10 @@ open class HandleManagerTestBase {
         }
     }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> WIP: Reference Handles
     @Test
     open fun collection_referenceLiveness() = runBlocking {
         // Create and store some entities.
