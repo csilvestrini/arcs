@@ -1098,6 +1098,8 @@ RecipeItem
   / RecipeSlot
   / RecipeSearch
   / RecipeConnection
+  / ClaimStatement
+  / CheckStatement
   / Description
 
 LocalName

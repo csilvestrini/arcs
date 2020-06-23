@@ -16,7 +16,7 @@ import {Schema} from '../schema.js';
 import {InterfaceType, Type, TypeVariableInfo} from '../type.js';
 
 import {ConnectionConstraint, EndPoint} from './connection-constraint.js';
-import {Direction} from '../manifest-ast-nodes.js';
+import {ClaimStatement, CheckStatement, Direction} from '../manifest-ast-nodes.js';
 import {HandleConnection} from './handle-connection.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
@@ -28,6 +28,8 @@ import {compareComparables} from './comparable.js';
 import {Cloneable} from './walker.js';
 import {Dictionary} from '../hot.js';
 import {AnnotationRef} from './annotation.js';
+import {Claim, createClaim} from '../claim.js';
+import {Check} from '../check.js';
 
 export type RecipeComponent = Particle | Handle | HandleConnection | Slot | SlotConnection | EndPoint;
 export type CloneMap = Map<RecipeComponent, RecipeComponent>;
@@ -45,6 +47,8 @@ export class Recipe implements Cloneable<Recipe> {
   private _name: string | undefined;
   private _localName: string | undefined = undefined;
   private _cloneMap: CloneMap;
+  private readonly _claims: Claim[] = [];
+  private readonly _checks: Check[] = [];
 
   private _annotations: AnnotationRef[] = [];
 
@@ -155,6 +159,17 @@ export class Recipe implements Cloneable<Recipe> {
         requires.slots.splice(idx, 1);
       }
     }
+  }
+
+  addClaim(claimStatement: ClaimStatement) {
+    // TODO: How to reuse the code from particle-spec.ts?
+    // Where should the checks/claims live? Currently they are on
+    // HandleConnectionSpec. The equivalent here is, apparently, Handle. :-/
+    this._claims.push(createClaim(, claimStatement, ))
+  }
+
+  addCheck(checkStatement: CheckStatement) {
+
   }
 
   isResolved(options?): boolean {
@@ -284,6 +299,8 @@ export class Recipe implements Cloneable<Recipe> {
   set search(search: Search | null) {
     this._search = search;
   }
+  get claims(): Claim[] { return this._claims; }
+  get checks(): Check[] { return this._checks; }
 
   setSearchPhrase(phrase?: string): void {
     assert(!this._search, 'Cannot override search phrase');

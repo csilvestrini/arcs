@@ -913,6 +913,8 @@ ${e.message}
       // tslint:disable-next-line: no-any
       byName: new Map<string, any>(),
       connections: recipeItems.filter(item => item.kind === 'connection') as AstNode.RecipeConnection[],
+      claims: recipeItems.filter(item => item.kind === 'claim') as AstNode.ClaimStatement[],
+      checks: recipeItems.filter(item => item.kind === 'check') as AstNode.CheckStatement[],
       search: recipeItems.find(item => item.kind === 'search') as AstNode.RecipeSearch,
       description: recipeItems.find(item => item.kind === 'description') as AstNode.Description
     };
@@ -1302,6 +1304,13 @@ ${e.message}
 
     if (items.description && items.description.description) {
       recipe.description = items.description.description;
+    }
+
+    for (const claim of items.claims) {
+      recipe.addClaim(claim);
+    }
+    for (const check of items.checks) {
+      recipe.addCheck(check);
     }
 
     if (items.require) {

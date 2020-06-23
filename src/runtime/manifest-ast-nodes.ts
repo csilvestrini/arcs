@@ -490,7 +490,18 @@ export interface RecipeRequire extends BaseNode {
   items: RecipeItem[];
 }
 
-export type RecipeItem = RecipeParticle | RecipeHandle | RecipeSyntheticHandle | RequireHandleSection | RecipeRequire | RecipeSlot | RecipeSearch | RecipeConnection | Description;
+export type RecipeItem =
+    RecipeParticle |
+    RecipeHandle |
+    RecipeSyntheticHandle |
+    RequireHandleSection |
+    RecipeRequire |
+    RecipeSlot |
+    RecipeSearch |
+    RecipeConnection |
+    ClaimStatement |
+    CheckStatement |
+    Description;
 
 export const RELAXATION_KEYWORD = 'someof';
 
