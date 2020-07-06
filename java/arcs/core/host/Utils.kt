@@ -13,6 +13,7 @@ package arcs.core.host
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.Plan
+import arcs.core.data.ReferenceType
 import arcs.core.data.Schema
 import arcs.core.data.SingletonType
 import arcs.core.host.api.Particle
@@ -52,13 +53,10 @@ inline fun <reified T : Particle> ((Plan.Particle?) -> T).toRegistration(): Part
  */
 fun Type.toSchema(): Schema {
     when (this) {
-        is SingletonType<*> -> if (this.containedType is EntityType) {
-            return (this.containedType as EntityType).entitySchema
-        }
-        is CollectionType<*> -> if (this.collectionType is EntityType) {
-            return (this.collectionType as EntityType).entitySchema
-        }
-        is EntityType -> return this.entitySchema
+        is EntityType -> return entitySchema
+        is SingletonType<*> -> containedType.toSchema()
+        is CollectionType<*> -> collectionType.toSchema()
+        is ReferenceType<*> -> containedType.toSchema()
         else -> Unit
     }
     throw IllegalArgumentException("Can't get entitySchema of unknown type $this")

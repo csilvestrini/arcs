@@ -14,6 +14,8 @@ package arcs.core.data
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.VersionMap
 import arcs.core.data.Schema.Companion.hashCode
+import arcs.core.type.Selector
+import arcs.core.type.SelectorList
 import arcs.core.type.Type
 
 /** Returns true if the RawEntity data matches the refinement predicate */
@@ -54,6 +56,18 @@ data class Schema(
     fun toLiteral(): Literal = Literal(names, fields, hash)
 
     fun createCrdtEntityModel(): CrdtEntity = CrdtEntity(VersionMap(), emptyRawEntity)
+
+    fun selectors(): List<SelectorList> {
+        val selectors = mutableListOf<SelectorList>()
+        // Add one empty list for this schema itself.
+        selectors.add(emptyList())
+        // Add selectors for each field.
+        (fields.singletons + fields.collections).forEach { (name, type) ->
+            val fieldSelector = listOf(Selector.Field(name))
+            selectors.addAll(type.selectors(SchemaRegistry::getSchema).map { fieldSelector + it })
+        }
+        return selectors
+    }
 
     override fun toString() = toString(Type.ToStringOptions())
 

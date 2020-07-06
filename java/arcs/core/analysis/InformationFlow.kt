@@ -14,20 +14,14 @@ package arcs.core.analysis
 import arcs.core.data.AccessPath
 import arcs.core.data.Check
 import arcs.core.data.Claim
-import arcs.core.data.CollectionType
-import arcs.core.data.EntityType
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.HandleMode
 import arcs.core.data.InformationFlowLabel
 import arcs.core.data.InformationFlowLabel.Predicate
-import arcs.core.data.MuxType
 import arcs.core.data.Recipe
 import arcs.core.data.Recipe.Particle
-import arcs.core.data.ReferenceType
 import arcs.core.data.Schema
-import arcs.core.data.SingletonType
-import arcs.core.data.TupleType
-import arcs.core.type.Tag
+import arcs.core.type.Selector
 import arcs.core.type.Type
 import arcs.core.util.TaggedLog
 import java.util.BitSet
@@ -238,7 +232,7 @@ class InformationFlow private constructor(
 
         // Filter out the information pertaining to the given handle -> join-handle edge.
         // Also, convert the root of the access path from handle to join-handle.
-        val component = listOf(getTupleField(spec.component))
+        val component = listOf(Selector.tupleComponent(spec.component))
         return AccessPathLabels.makeValue(
             accessPathLabels
                 .filterKeys { accessPath ->
@@ -261,34 +255,17 @@ class InformationFlow private constructor(
         }
     }
 
-    /** Returns the [AccessPath.Selector] part of the [AccessPath] instances for this [Type]. */
-    private fun Type.accessPathSelectors(): Set<List<AccessPath.Selector>> = when (tag) {
-        // TODO(bgogul): For fields, we are only going one level deep. Do we need to go further?
-        Tag.Collection -> (this as CollectionType<*>).collectionType.accessPathSelectors()
-        Tag.Count -> emptySet<List<AccessPath.Selector>>()
-        Tag.Entity -> (this as EntityType).entitySchema.accessPathSelectors()
-        // TODO(b/154234733): This only supports simple use cases of references.
-        Tag.Reference -> (this as ReferenceType<*>).containedType.accessPathSelectors()
-        Tag.Mux -> (this as MuxType<*>).containedType.accessPathSelectors()
-        Tag.Tuple -> (this as TupleType).elementTypes
-            .foldIndexed(emptySet<List<AccessPath.Selector>>()) { index, acc, cur ->
-                acc + cur.accessPathSelectors().map { listOf(getTupleField(index)) + it }
-            }
-        Tag.Singleton -> (this as SingletonType<*>).containedType.accessPathSelectors()
-        Tag.TypeVariable -> throw IllegalArgumentException("TypeVariable should be resolved!")
-    }
-
-    /** Returns the [AccessPath.Selector] part of [AccessPath] instances for this [Schema]. */
-    private fun Schema.accessPathSelectors(): Set<List<AccessPath.Selector>> {
+    /** Returns the [Selector] part of [AccessPath] instances for this [Schema]. */
+    private fun Schema.accessPathSelectors(): Set<List<Selector>> {
         return (
-            fields.singletons.keys.map { listOf(AccessPath.Selector.Field(it)) } +
-            fields.collections.keys.map { listOf(AccessPath.Selector.Field(it)) }
+            fields.singletons.keys.map { listOf(Selector.Field(it)) } +
+            fields.collections.keys.map { listOf(Selector.Field(it)) }
         ).toSet()
     }
 
     /** Returns true if the selectors of the given [AccessPath] match any of the [prefixes]. */
     private fun AccessPath.selectorsMatchAnyPrefix(
-        prefixes: Set<List<AccessPath.Selector>>
+        prefixes: Set<List<Selector>>
     ): Boolean {
         return (prefixes.isEmpty() && selectors.isEmpty()) || prefixes.any { prefix ->
             prefix.size <= selectors.size && selectors.subList(0, prefix.size) == prefix
@@ -379,18 +356,8 @@ class InformationFlow private constructor(
     )
 
     companion object {
-
-        val tupleIndexNames = listOf("first", "second", "third", "fourth", "fifth")
-
-        public fun getTupleField(component: Int): AccessPath.Selector.Field {
-            require(component >= 0 && component < tupleIndexNames.size) {
-                "Only up to ${tupleIndexNames.size} tuple components is allowed!"
-            }
-            return AccessPath.Selector.Field(tupleIndexNames[component])
-        }
-
         /** Computes the labels for [recipe] when [ingress] is used as the ingress handles. */
-        public fun computeLabels(recipe: Recipe, ingress: List<String>): AnalysisResult {
+        fun computeLabels(recipe: Recipe, ingress: List<String>): AnalysisResult {
             val graph = RecipeGraph(recipe)
             val analysis = InformationFlow(graph, ingress)
             return AnalysisResult(

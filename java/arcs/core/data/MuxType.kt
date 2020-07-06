@@ -11,6 +11,7 @@
 
 package arcs.core.data
 
+import arcs.core.type.Selector
 import arcs.core.type.Tag
 import arcs.core.type.Type
 import arcs.core.type.TypeFactory
@@ -48,6 +49,8 @@ data class MuxType<T : Type>(private val innerType: T) :
 
     override fun copyWithResolutions(variableMap: MutableMap<Any, Any>): Type =
         MuxType(containedType.copyWithResolutions(variableMap))
+
+    override fun selectors(): List<Selector> = containedType.selectors()
 
     override fun toLiteral() = Literal(tag, containedType.toLiteral())
 

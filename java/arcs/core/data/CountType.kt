@@ -13,6 +13,7 @@ package arcs.core.data
 
 import arcs.core.crdt.CrdtCount
 import arcs.core.crdt.CrdtModelType
+import arcs.core.type.SelectorList
 import arcs.core.type.Tag
 import arcs.core.type.Type
 import arcs.core.type.TypeFactory
@@ -28,6 +29,8 @@ data class CountType(
     override fun toLiteral() = Literal(tag)
 
     override fun createCrdtModel() = CrdtCount()
+
+    override fun selectors(): List<SelectorList> = emptyList()
 
     data class Literal(override val tag: Tag) : TypeLiteral
 

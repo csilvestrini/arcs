@@ -17,6 +17,7 @@ import arcs.core.crdt.CrdtModelType
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSet.Data
 import arcs.core.crdt.CrdtSet.IOperation
+import arcs.core.type.SelectorList
 import arcs.core.type.Tag
 import arcs.core.type.Type
 import arcs.core.type.TypeFactory
@@ -64,6 +65,8 @@ data class CollectionType<T : Type>(
 
     override fun copyWithResolutions(variableMap: MutableMap<Any, Any>): Type =
         CollectionType(collectionType.copyWithResolutions(variableMap))
+
+    override fun selectors(): List<SelectorList> = collectionType.selectors()
 
     override fun toLiteral(): TypeLiteral = Literal(tag, collectionType.toLiteral())
 

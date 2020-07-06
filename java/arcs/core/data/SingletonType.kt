@@ -14,6 +14,7 @@ package arcs.core.data
 import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtModelType
 import arcs.core.crdt.CrdtSingleton
+import arcs.core.type.SelectorList
 import arcs.core.type.Tag
 import arcs.core.type.Type
 import arcs.core.type.TypeFactory
@@ -39,6 +40,8 @@ data class SingletonType<T : Type>(override val containedType: T) :
     override fun toLiteral() = Literal(tag, containedType.toLiteral())
 
     override fun createCrdtModel() = CrdtSingleton<Referencable>()
+
+    override fun selectors(): List<SelectorList> = containedType.selectors()
 
     data class Literal(override val tag: Tag, override val data: TypeLiteral) : TypeLiteral
 

@@ -9,15 +9,8 @@ package arcs.golden
 // Current implementation doesn't support optional field detection
 
 import arcs.core.data.*
-import arcs.core.data.util.ReferencablePrimitive
-import arcs.core.data.util.toReferencable
 import arcs.core.entity.Reference
-import arcs.core.entity.SchemaRegistry
-import arcs.core.entity.Tuple1
-import arcs.core.entity.Tuple2
-import arcs.core.entity.Tuple3
-import arcs.core.entity.Tuple4
-import arcs.core.entity.Tuple5
+import arcs.core.data.SchemaRegistry
 import arcs.core.entity.toPrimitiveValue
 import arcs.sdk.*
 

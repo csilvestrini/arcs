@@ -11,6 +11,8 @@
 
 package arcs.core.data
 
+import arcs.core.type.Selector
+
 /**
  * Specifies an access path in a claim or a check.
  *
@@ -66,14 +68,6 @@ data class AccessPath(val root: Root, val selectors: List<Selector> = emptyList(
             override fun toString() = "hcs:$particleSpecName.${connectionSpec.name}"
         }
         // TODO(bgogul): Store, etc.
-    }
-
-    /** Represents an access to a part of the data (like a field). */
-    sealed class Selector {
-        data class Field(val field: FieldName) : Selector() {
-            override fun toString() = "$field"
-        }
-        // TODO(bgogul): Indexing, Dereferencing(?).
     }
 
     override fun toString(): String {

@@ -14,6 +14,7 @@ package arcs.core.data
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtModelType
+import arcs.core.type.Selector
 import arcs.core.type.Tag
 import arcs.core.type.Type
 import arcs.core.type.TypeFactory
@@ -36,6 +37,8 @@ data class EntityType(override val entitySchema: Schema) :
 
     override fun createCrdtModel(): CrdtModel<CrdtEntity.Data, CrdtEntity.Operation, RawEntity> =
         entitySchema.createCrdtEntityModel()
+
+    override fun selectors(): List<Selector> = entitySchema.selectors()
 
     override fun toLiteral() = Literal(tag, entitySchema.toLiteral())
 

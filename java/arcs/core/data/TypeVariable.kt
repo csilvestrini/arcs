@@ -11,6 +11,7 @@
 
 package arcs.core.data
 
+import arcs.core.type.Selector
 import arcs.core.type.Tag
 import arcs.core.type.Type
 import arcs.core.type.TypeLiteral
@@ -26,6 +27,12 @@ data class TypeVariable(val name: String, val constraint: Type? = null) : Type {
     override fun toLiteral() = Literal(tag, VariableLiteral(name, constraint?.toLiteral()))
 
     override fun toString(options: Type.ToStringOptions) = "~$name"
+
+    override fun selectors(): List<Selector> {
+        throw UnsupportedOperationException(
+            "TypeVariable must be resolved before selectors can be known."
+        )
+    }
 
     /** [Literal][arcs.core.common.Literal] representation of the variable. */
     data class VariableLiteral(

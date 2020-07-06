@@ -68,6 +68,8 @@ interface Type {
     fun copyWithResolutions(variableMap: MutableMap<Any, Any>): Type =
         TypeFactory.getType(toLiteral())
 
+    fun selectors(): List<SelectorList>
+
     /** Produces a string-representation of this [Type], configurable with [options]. */
     fun toString(options: ToStringOptions): String = "${this.tag}"
 

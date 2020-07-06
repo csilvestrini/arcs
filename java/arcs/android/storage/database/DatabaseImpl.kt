@@ -45,7 +45,7 @@ import arcs.core.data.Schema
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
-import arcs.core.entity.SchemaRegistry
+import arcs.core.data.SchemaRegistry
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyParser
@@ -1516,9 +1516,7 @@ class DatabaseImpl(
     ): TypeId = when (fieldType) {
         is FieldType.Primitive -> fieldType.primitiveType.primitiveTypeId()
         is FieldType.EntityRef -> {
-            val schema = requireNotNull(SchemaRegistry.getSchema(fieldType.schemaHash)) {
-                "Unknown Schema with hash: ${fieldType.schemaHash} in SchemaRegistry"
-            }
+            val schema = SchemaRegistry.getSchema(fieldType.schemaHash)
             getSchemaTypeId(schema, database)
         }
         // TODO(b/156003617)

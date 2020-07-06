@@ -1,6 +1,8 @@
 package arcs.core.data
 
 import arcs.core.common.LiteralList
+import arcs.core.type.Selector
+import arcs.core.type.SelectorList
 import arcs.core.type.Tag
 import arcs.core.type.Type
 import arcs.core.type.TypeFactory
@@ -16,6 +18,13 @@ data class TupleType(val elementTypes: List<Type>) : Type {
 
     override fun copyWithResolutions(variableMap: MutableMap<Any, Any>): Type =
         TupleType(elementTypes.map { it.copyWithResolutions(variableMap) })
+
+    override fun selectors(): List<SelectorList> {
+        return elementTypes.mapIndexed { index, type ->
+            val tupleSelector = listOf(Selector.tupleComponent(index))
+            type.selectors().map { tupleSelector + it }
+        }.flatten()
+    }
 
     override fun toLiteral() = Literal(tag, LiteralList(elementTypes.map { it.toLiteral() }))
 

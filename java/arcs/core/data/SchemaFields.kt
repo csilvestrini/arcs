@@ -11,30 +11,57 @@
 
 package arcs.core.data
 
+import arcs.core.type.Selector
+import arcs.core.type.SelectorList
 import arcs.core.type.Type
 
 /** The possible types for a field in a [Schema]. */
 sealed class FieldType(
     val tag: Tag
 ) {
+    abstract fun selectors(schemaHashLookup: (String) -> Schema): List<SelectorList>
+
     /** An Arcs primitive type. */
     data class Primitive(val primitiveType: PrimitiveType) : FieldType(Tag.Primitive) {
         override fun toString() = primitiveType.name
+
+        override fun selectors(schemaHashLookup: (String) -> Schema): List<SelectorList> {
+            return listOf(emptyList())
+        }
     }
 
     /** A reference to an entity. */
     data class EntityRef(val schemaHash: String) : FieldType(Tag.EntityRef) {
         override fun toString() = "&$schemaHash"
+
+        override fun selectors(schemaHashLookup: (String) -> Schema): List<SelectorList> {
+            return schemaHashLookup(schemaHash).selectors()
+        }
     }
 
     /** A tuple of [FieldType]s */
     data class Tuple(val types: List<FieldType>) : FieldType(Tag.Tuple) {
         override fun toString() = "(${types.joinToString()})"
+
+        override fun selectors(schemaHashLookup: (String) -> Schema): List<SelectorList> {
+            return types.mapIndexed { index, type ->
+                val tupleSelector = listOf(Selector.tupleComponent(index))
+                type.selectors(schemaHashLookup).map { tupleSelector + it }
+            }.flatten()
+        }
     }
 
-    data class ListOf(val primitiveType: FieldType) : FieldType(Tag.List)
+    data class ListOf(val primitiveType: FieldType) : FieldType(Tag.List) {
+        override fun selectors(schemaHashLookup: (String) -> Schema): List<SelectorList> {
+            return primitiveType.selectors(schemaHashLookup)
+        }
+    }
 
-    data class InlineEntity(val schemaHash: String) : FieldType(Tag.InlineEntity)
+    data class InlineEntity(val schemaHash: String) : FieldType(Tag.InlineEntity) {
+        override fun selectors(schemaHashLookup: (String) -> Schema): List<SelectorList> {
+            return schemaHashLookup(schemaHash).selectors()
+        }
+    }
 
     enum class Tag {
         Primitive,
@@ -112,3 +139,5 @@ data class SchemaFields(
         return "{$fields}"
     }
 }
+
+typealias FieldVisitorCallback = (selectors: List<String>, type: FieldType) -> Unit
